@@ -1,19 +1,44 @@
-# 🎈 Blank app template
+# 👁️ Glaucoma Agent – Frontend
 
-A simple Streamlit app template for you to modify!
+A Streamlit UI to upload retinal fundus images and view the Glaucoma Agent’s diagnosis with an annotated image.
 
-[![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://blank-app-template.streamlit.app/)
+## Run locally
 
-### How to run it on your own machine
+1) Install dependencies
 
-1. Install the requirements
+```bash
+pip install -r requirements.txt
+```
 
-   ```
-   $ pip install -r requirements.txt
-   ```
+2) Start the app
 
-2. Run the app
+```bash
+streamlit run streamlit_app.py
+```
 
-   ```
-   $ streamlit run streamlit_app.py
-   ```
+3) Configure backend
+
+- In the app sidebar, set the "Colab Server URL" to your Flask/ngrok URL that exposes `POST /predict`.
+- By default, it uses:
+
+```
+https://dominant-usually-oyster.ngrok-free.app
+```
+
+## Expected backend contract
+
+Endpoint: `POST {SERVER_URL}/predict`
+
+- form-data key `image`: the uploaded fundus image file
+- JSON response (example):
+
+```json
+{
+  "classification": "glaucoma suspect",
+  "detail": "Increased cup-to-disc ratio with suspicious rim thinning.",
+  "ratio": 0.63,
+  "annotated_image_url": "https://<your-ngrok>/artifacts/annotated_123.png"
+}
+```
+
+The UI displays the classification badge, CDR metric, explanatory detail, and the annotated image when available.
