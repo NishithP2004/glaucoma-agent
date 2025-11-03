@@ -4,6 +4,7 @@ import mimetypes
 from typing import Optional, Tuple
 
 import streamlit as st
+from html import escape
 
 try:
     import requests
@@ -25,12 +26,42 @@ PRIMARY_URL_DEFAULT = "https://dominant-usually-oyster.ngrok-free.app"
 st.markdown(
     """
     <style>
+            /* Theme-aware tokens for card */
+            :root {
+                --card-bg: #ffffff;
+                --card-border: rgba(0,0,0,0.06);
+                --muted: #6b7280;
+                --fg: #111827; /* gray-900 */
+                --card-shadow: 0 1px 2px rgba(17,24,39,0.06), 0 4px 12px rgba(17,24,39,0.04);
+            }
+            @media (prefers-color-scheme: dark) {
+                :root {
+                    --card-bg: #111827; /* gray-900 */
+                    --card-border: #374151; /* gray-700 */
+                    --muted: #9CA3AF; /* gray-400 */
+                    --fg: #E5E7EB; /* gray-200 */
+                    --card-shadow: 0 1px 2px rgba(0,0,0,0.4);
+                }
+            }
+
       .card {
         padding: 1rem 1.25rem;
-        border: 1px solid rgba(49,51,63,0.2);
-        border-radius: 12px;
-        background: linear-gradient(180deg, rgba(250,250,250,0.9) 0%, rgba(245,245,245,0.8) 100%);
+                border: 1px solid var(--card-border);
+                border-radius: 12px;
+                                background: var(--card-bg);
+                                color: var(--fg);
+                                line-height: 1.5;
+        box-shadow: var(--card-shadow);
       }
+        .card p { margin: 0.35rem 0 0; }
+        .card-grid {
+            display: flex;
+            gap: 1rem;
+            align-items: flex-start;
+            justify-content: space-between;
+        }
+        .card-left { flex: 2; min-width: 0; }
+        .card-right { flex: 1; text-align: right; }
       .status-badge {
         display: inline-block;
         padding: 0.35rem 0.65rem;
@@ -41,8 +72,11 @@ st.markdown(
       .badge-green { background: #DCFCE7; color: #166534; }
       .badge-red { background: #FEE2E2; color: #991B1B; }
       .badge-amber { background: #FEF3C7; color: #92400E; }
-      .subtle { color: #6b7280; }
+                        .subtle { color: var(--muted); }
       .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+                        .kpi .label { color: var(--muted); font-size: 0.85rem; margin-bottom: 0.25rem; }
+            .kpi .value { font-size: 1.5rem; font-weight: 700; }
+
     </style>
     """,
     unsafe_allow_html=True,
@@ -170,27 +204,32 @@ if analyze and uploaded is not None:
                 ratio_val = float(ratio) if ratio is not None else None
             except Exception:
                 ratio_val = None
+            # Prepare ratio text: prefer numeric to 2 decimals; else raw string; else em dash
+            ratio_text = f"{ratio_val:.2f}" if ratio_val is not None else (str(ratio).strip() if ratio not in (None, "", []) else "—")
 
             with result_container:
                 st.subheader("Results")
 
-                # Top summary card
-                with st.container():
-                    st.markdown("<div class='card'>", unsafe_allow_html=True)
-                    cols = st.columns([2, 1])
-                    with cols[0]:
-                        st.markdown(
-                            f"Classification: {classification_badge(classification or 'Unknown')}",
-                            unsafe_allow_html=True,
-                        )
-                        if detail:
-                            st.write(detail)
-                    with cols[1]:
-                        if ratio_val is not None:
-                            st.metric("Cup-to-Disc Ratio", f"{ratio_val:.2f}")
-                        else:
-                            st.metric("Cup-to-Disc Ratio", "—")
-                    st.markdown("</div>", unsafe_allow_html=True)
+                                # Top summary card
+                st.markdown(
+                        f"""
+                        <div class="card">
+                            <div class="card-grid">
+                                <div class="card-left">
+                                    <div>Classification: {classification_badge(classification or 'Unknown')}</div>
+                                    {f"<p>{escape(str(detail))}</p>" if detail else ""}
+                                </div>
+                                <div class="card-right">
+                                    <div class="kpi">
+                                        <div class="label">Cup-to-Disc Ratio</div>
+                                        <div class="value">{escape(ratio_text)}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        """,
+                        unsafe_allow_html=True,
+                )
 
                 st.divider()
 
